@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"time"
@@ -12,6 +13,12 @@ import (
 func New() *fiber.App {
 	// Create new app
 	app := fiber.New()
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost, *",
+		AllowHeaders: "Origin, Content-Type, Accept",
+		AllowMethods: "GET, POST, OPTIONS",
+	}))
 
 	// Api group
 	api := app.Group("/api")
