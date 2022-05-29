@@ -1,12 +1,9 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/patrickmn/go-cache"
 	"time"
 )
 
@@ -43,16 +40,8 @@ func PostData(ctx *fiber.Ctx) error {
 
 	data.CreatedAt = time.Now().UTC()
 
-	collection := mg.Db.Collection("weather")
+	c.Set("data", data, cache.NoExpiration)
 
-	_, err := collection.InsertOne(context.TODO(), data)
-	if err != nil {
-		fmt.Printf("insert error: %s", err)
-		return ctx.JSON(fiber.Map{
-			"message": err.Error(),
-			"success": false,
-		})
-	}
 	return ctx.JSON(fiber.Map{
 		"message": "Successfully inserted weather",
 		"success": true,
@@ -60,32 +49,19 @@ func PostData(ctx *fiber.Ctx) error {
 }
 
 func GetData(ctx *fiber.Ctx) error {
-	var result Data
+	result, found := c.Get("data")
 
-	col := mg.Db.Collection("weather")
-
-	findOptions := options.Find()
-	// Sort by `price` field descending
-	findOptions.SetSort(bson.D{{"createdat", -1}})
-	findOptions.SetLimit(1)
-
-	cursor, err := col.Find(context.TODO(), bson.D{}, findOptions)
-	for cursor.Next(context.TODO()) {
-		err = cursor.Decode(&result)
-	}
-
-	if err != nil {
-		fmt.Println("FindOne() ERROR:", err)
+	if found {
 		return ctx.JSON(fiber.Map{
-			"message": err.Error(),
+			"message": "Successfully retrieved weather",
+			"success": true,
+			"data":    result,
+		})
+	} else {
+		return ctx.JSON(fiber.Map{
+			"message": "No data found",
 			"success": false,
 			"data":    nil,
 		})
 	}
-
-	return ctx.JSON(fiber.Map{
-		"message": "Successfully got the weather",
-		"data":    result,
-		"success": true,
-	})
 }

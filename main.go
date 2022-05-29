@@ -3,20 +3,20 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/patrickmn/go-cache"
 	"log"
+	"time"
 )
 
 var mg MongoInstance
+var c *cache.Cache
 
 func main() {
 
 	// Load var from .env file
 	LoadVar()
 
-	err := Connect()
-	if err != nil {
-		log.Fatal(err)
-	}
+	c = cache.New(5*60*60*time.Second, 10*60*60*time.Second)
 
 	defer func() {
 		fmt.Println("Disconnect")
